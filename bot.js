@@ -163,6 +163,7 @@ client.on("interactionCreate", async (interaction) => {
   if (command === "inventory") {
     try {
       const ownerId = interaction.options.getUser("owner")?.id || null;
+      const user = interaction.user.id;
 
       let discs;
       let ownerText = "all users";
@@ -188,9 +189,11 @@ client.on("interactionCreate", async (interaction) => {
         name: `${disc.brand} ${disc.name}`,
         value: `Weight: ${disc.weight}g\nColor: ${disc.color}\nPlastic: ${
           disc.plastic
-        }\nLooking For: ${disc.lookingFor}\n${
-          ownerId ? "" : `Owner: <@${disc.owner}>\n`
-        }${disc.image_url ? `Image: [View](${disc.image_url})` : ""}`,
+        }\nLooking For: ${disc.lookingFor}${
+          ownerId ? "" : `\nOwner: <@${disc.owner}>`
+        }${disc.image_url ? `\nImage: [View](${disc.image_url})` : ""}${
+          user === disc.owner ? "\nID: " + disc.id : ""
+        }`,
         inline: true,
       }));
 
