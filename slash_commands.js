@@ -39,9 +39,15 @@ const commands = [
     )
     .addStringOption((option) =>
       option
-        .setName("price")
-        .setDescription('The price of the disc (US Dollars or "negotiable")')
+        .setName("looking-for")
+        .setDescription("What are you looking for? (Discs, Cash, etc.)")
         .setRequired(true)
+    )
+    .addAttachmentOption((option) =>
+      option
+        .setName("image")
+        .setDescription("Upload an image of the disc")
+        .setRequired(false)
     ),
   new SlashCommandBuilder()
     .setName("inventory")

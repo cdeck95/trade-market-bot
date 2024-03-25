@@ -45,7 +45,7 @@ const DiscDB = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true, // This makes the field optional
     },
-    price: {
+    lookingFor: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -81,6 +81,19 @@ async function syncDB() {
   } catch (error) {
     console.error("Unable to connect to the database:", error);
     process.exit(1); // Exit the process with an error code
+  }
+}
+
+async function updateDisc(discId, updates) {
+  try {
+    const disc = await DiscDB.findByPk(discId);
+    if (!disc) {
+      throw new Error("Disc not found");
+    }
+    await disc.update(updates);
+  } catch (error) {
+    console.error("Error updating disc:", error);
+    throw new Error("Failed to update disc");
   }
 }
 
@@ -126,4 +139,4 @@ async function searchMarket(query, threshold = 50) {
 }
 
 // Export the model and sync function
-module.exports = { DiscDB, syncDB, searchMarket };
+module.exports = { DiscDB, syncDB, searchMarket, updateDisc };

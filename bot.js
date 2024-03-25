@@ -1,6 +1,8 @@
 require("dotenv").config();
+const AWS = require("aws-sdk");
+const fs = require("fs");
 const { Op } = require("sequelize");
-const { DiscDB, searchMarket } = require("./db");
+const { DiscDB, searchMarket, updateDisc } = require("./db");
 const { Client, EmbedBuilder, GatewayIntentBits } = require("discord.js");
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -9,13 +11,31 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+// Create an S3 service object
+// const s3 = new AWS.S3({
+//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+// });
+
 // Reusable function to create a Discord embed
-function createEmbed(title, description, color, fields, footer, ephemeral) {
-  const embed = new EmbedBuilder()
+function createEmbed(
+  title,
+  description,
+  color,
+  fields,
+  footer,
+  image,
+  ephemeral
+) {
+  embed = new EmbedBuilder()
     .setTitle(title)
     .setDescription(description)
     .setColor(color)
     .setTimestamp();
+
+  if (image) {
+    embed.setImage(image);
+  }
 
   // Add a footer to the embed
   if (footer) {
@@ -33,7 +53,6 @@ function createEmbed(title, description, color, fields, footer, ephemeral) {
 
   return { embeds: [embed], ephemeral: ephemeral };
 }
-
 // Using the function in the list command
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
@@ -41,6 +60,11 @@ client.on("interactionCreate", async (interaction) => {
   const command = interaction.commandName;
 
   if (command === "list") {
+    await interaction.deferReply();
+    // await interaction.editReply({
+    //   content: "Processing your request...",
+    //   ephemeral: true,
+    // });
     try {
       // Extract options from the interaction
       const brand = interaction.options.getString("brand");
@@ -48,8 +72,15 @@ client.on("interactionCreate", async (interaction) => {
       const weight = interaction.options.getInteger("weight");
       const color = interaction.options.getString("color");
       const plastic = interaction.options.getString("plastic");
-      const price = interaction.options.getString("price");
-      const image_url = interaction.options.getString("image_url");
+      const lookingFor = interaction.options.getString("looking-for");
+      const imageAttachment = interaction.options.getAttachment("image");
+
+      let imageURL = null;
+
+      if (imageAttachment) {
+        // Use the attachment URL directly as the imageURL
+        imageURL = imageAttachment.url;
+      }
 
       // Get the user ID of the interaction's author
       const owner = interaction.user.id;
@@ -61,8 +92,8 @@ client.on("interactionCreate", async (interaction) => {
         weight: weight,
         color: color,
         plastic: plastic,
-        price: price,
-        image_url: image_url || null, // Optional image URL
+        lookingFor: lookingFor,
+        image_url: imageURL || null, // Optional image URL
         owner: owner,
         status: "Listed",
       });
@@ -78,23 +109,19 @@ client.on("interactionCreate", async (interaction) => {
           { name: "Weight", value: `${newDisc.weight}g`, inline: true },
           { name: "Color", value: newDisc.color, inline: true },
           { name: "Plastic", value: newDisc.plastic, inline: true },
-          { name: "Price", value: newDisc.price, inline: true },
+          { name: "Looking For", value: newDisc.lookingFor, inline: true },
           { name: "Owner", value: `<@${newDisc.owner}>`, inline: true },
         ],
         `Disc ID: ${newDisc.id}`,
+        imageURL,
         false // Ephemeral set to false to make the message visible to everyone
       );
 
-      // Check if an image URL is provided and add it to the embed if available
-      if (newDisc.image_url) {
-        embed.setImage(newDisc.image_url);
-      }
-
       // Respond with the embed
-      await interaction.reply(embed);
+      await interaction.editReply(embed);
     } catch (error) {
       console.error("Error adding disc:", error);
-      await interaction.reply({
+      await interaction.editReply({
         content: "An error occurred while adding the disc.",
         ephemeral: true,
       });
@@ -161,9 +188,9 @@ client.on("interactionCreate", async (interaction) => {
         name: `${disc.brand} ${disc.name}`,
         value: `Weight: ${disc.weight}g\nColor: ${disc.color}\nPlastic: ${
           disc.plastic
-        }\nPrice: ${disc.price}\n${ownerId ? "" : `Owner: <@${disc.owner}>\n`}${
-          disc.image_url ? `Image: [View](${disc.image_url})` : ""
-        }`,
+        }\nLooking For: ${disc.lookingFor}\n${
+          ownerId ? "" : `Owner: <@${disc.owner}>\n`
+        }${disc.image_url ? `Image: [View](${disc.image_url})` : ""}`,
         inline: true,
       }));
 
@@ -212,7 +239,7 @@ client.on("interactionCreate", async (interaction) => {
         name: `${disc.brand} ${disc.name}`,
         value: `Weight: ${disc.weight}g\nColor: ${disc.color}\nPlastic: ${
           disc.plastic
-        }\nPrice: ${disc.price}\nOwner: <@${disc.owner}>\n${
+        }\nLooking For: ${disc.lookingFor}\nOwner: <@${disc.owner}>\n${
           disc.image_url ? `Image: [View](${disc.image_url})` : ""
         }`,
         inline: false,
@@ -224,6 +251,7 @@ client.on("interactionCreate", async (interaction) => {
         "Here are the discs found in the market matching your query:",
         "#0099ff",
         fields,
+        null, // no image for this embed
         null, // No footer for this embed
         true
       );
