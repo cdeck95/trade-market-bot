@@ -1,5 +1,4 @@
 require("dotenv").config();
-const AWS = require("aws-sdk");
 const fs = require("fs");
 const { Op } = require("sequelize");
 const { DiscDB, searchMarket, updateDisc } = require("./db");
@@ -11,11 +10,7 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-// Create an S3 service object
-// const s3 = new AWS.S3({
-//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-// });
+const CHANNEL_TO_REPLY = process.env.CHANNEL_TO_REPLY;
 
 // Reusable function to create a Discord embed
 function createEmbed(
