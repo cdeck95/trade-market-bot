@@ -48,6 +48,7 @@ function createEmbed(
 
   return { embeds: [embed], ephemeral: ephemeral };
 }
+
 // Using the function in the list command
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
@@ -55,11 +56,7 @@ client.on("interactionCreate", async (interaction) => {
   const command = interaction.commandName;
 
   if (command === "list") {
-    await interaction.deferReply();
-    // await interaction.editReply({
-    //   content: "Processing your request...",
-    //   ephemeral: true,
-    // });
+    await interaction.deferReply({ ephemeral: true });
     try {
       // Extract options from the interaction
       const brand = interaction.options.getString("brand");
@@ -111,9 +108,25 @@ client.on("interactionCreate", async (interaction) => {
         imageURL,
         false // Ephemeral set to false to make the message visible to everyone
       );
+      console.log(embed);
+      console.log(embed.embeds[0]);
+      // Use the CHANNEL_TO_REPLY to send a message to a specific channel
+      const replyChannel = client.channels.cache.get(CHANNEL_TO_REPLY);
+      if (replyChannel) {
+        // Ensure the channel was found
+        replyChannel.send({
+          content: `<@${interaction.user.id}>, your disc has been listed!`,
+          embeds: [embed.embeds[0]],
+        });
+      } else {
+        console.error("Failed to find the reply channel.");
+      }
 
-      // Respond with the embed
-      await interaction.editReply(embed);
+      // Inform the user via the initial interaction that the event was posted elsewhere
+      await interaction.editReply({
+        content: `Your disc has been listed and posted in the <#${CHANNEL_TO_REPLY}> channel.`,
+        ephemeral: true,
+      });
     } catch (error) {
       console.error("Error adding disc:", error);
       await interaction.editReply({
