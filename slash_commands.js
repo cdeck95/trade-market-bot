@@ -48,6 +48,12 @@ const commands = [
         .setName("image")
         .setDescription("Upload an image of the disc")
         .setRequired(false)
+    )
+    .addUserOption((option) =>
+      option
+        .setName("owner")
+        .setDescription("Current owner of the disc")
+        .setRequired(false)
     ),
   new SlashCommandBuilder()
     .setName("inventory")

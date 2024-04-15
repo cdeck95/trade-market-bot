@@ -66,6 +66,10 @@ client.on("interactionCreate", async (interaction) => {
       const plastic = interaction.options.getString("plastic");
       const lookingFor = interaction.options.getString("looking-for");
       const imageAttachment = interaction.options.getAttachment("image");
+      const optionalOwner = interaction.options.getUser("owner");
+
+      // Get the user ID of the specified owner or the interaction's author
+      const owner = optionalOwner ? optionalOwner.id : interaction.user.id;
 
       let imageURL = null;
 
@@ -73,9 +77,6 @@ client.on("interactionCreate", async (interaction) => {
         // Use the attachment URL directly as the imageURL
         imageURL = imageAttachment.url;
       }
-
-      // Get the user ID of the interaction's author
-      const owner = interaction.user.id;
 
       // Create a new disc record in the database
       const newDisc = await DiscDB.create({
@@ -115,7 +116,7 @@ client.on("interactionCreate", async (interaction) => {
       if (replyChannel) {
         // Ensure the channel was found
         replyChannel.send({
-          content: `<@${interaction.user.id}>, your disc has been listed!`,
+          content: `<@${owner}>, your disc has been listed!`,
           embeds: [embed.embeds[0]],
         });
       } else {
