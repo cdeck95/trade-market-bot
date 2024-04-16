@@ -142,10 +142,10 @@ client.on("interactionCreate", async (interaction) => {
       const discId = interaction.options.getInteger("id");
 
       // Find the disc in the database by its ID
-      const discToRemove = await DiscDB.findByPk(discId);
+      const discToUpdate = await DiscDB.findByPk(discId);
 
       // If the disc is not found, respond with an error message
-      if (!discToRemove) {
+      if (!discToUpdate) {
         await interaction.reply({
           content: "Disc not found.",
           ephemeral: true,
@@ -153,13 +153,20 @@ client.on("interactionCreate", async (interaction) => {
         return;
       }
 
-      // Remove the disc from the database
-      await discToRemove.destroy();
+      console.log(
+        "Updating status for disc ID:",
+        discId,
+        "New status:",
+        "traded"
+      );
+
+      // Update the disc's status to 'traded'
+      await updateDisc(discId, { status: "Traded" });
 
       // Respond with a success message
       await interaction.reply({
-        content: `Disc "${discToRemove.brand} ${discToRemove.name}" has been removed from the trade market.`,
-        ephemeral: true,
+        content: `Disc "${discToUpdate.brand} ${discToUpdate.name}" has been removed from the trade market.`,
+        ephemeral: false,
       });
     } catch (error) {
       console.error("Error removing disc:", error);

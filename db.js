@@ -86,6 +86,7 @@ async function syncDB() {
 
 async function updateDisc(discId, updates) {
   try {
+    console.log("Received update parameters:", updates);
     const disc = await DiscDB.findByPk(discId);
     if (!disc) {
       throw new Error("Disc not found");
